@@ -1,17 +1,18 @@
 package org.course_project.userService.config;
 
+import org.course_project.userService.dto.user.UserWithCardsResponse;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
-import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Configuration
 @EnableCaching
@@ -19,10 +20,12 @@ public class CacheConfig {
 
   @Bean
   public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-    ObjectMapper objectMapper = JsonMapper.builder().build();
+    var objectMapper = JsonMapper.builder().build();
 
-    GenericJacksonJsonRedisSerializer serializer =
-        new GenericJacksonJsonRedisSerializer(objectMapper);
+    var serializer = new JacksonJsonRedisSerializer<>(
+        objectMapper,
+        UserWithCardsResponse.class
+    );
 
     RedisCacheConfiguration cacheConfiguration =
         RedisCacheConfiguration.defaultCacheConfig()
@@ -34,6 +37,9 @@ public class CacheConfig {
             );
 
     return RedisCacheManager.builder(connectionFactory)
+        .withInitialCacheConfigurations(
+            Map.of("userWithCards", cacheConfiguration)
+        )
         .cacheDefaults(cacheConfiguration)
         .transactionAware()
         .build();

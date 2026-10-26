@@ -9,6 +9,9 @@ import org.course_project.userService.dto.user.UserUpdateRequest;
 import org.course_project.userService.entity.User;
 import org.course_project.userService.mapper.UserMapper;
 import org.course_project.userService.repository.UserRepository;
+import org.course_project.userService.dto.user.UserWithCardsResponse;
+import org.course_project.userService.dto.card.PaymentCardResponse;
+import org.course_project.userService.dto.card.PaymentCardSummaryResponse;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +41,9 @@ class UserServiceTest {
 
   @Mock
   private UserMapper userMapper;
+
+  @Mock
+  private PaymentCardService paymentCardService;
 
   @InjectMocks
   private UserService userService;
@@ -383,6 +389,71 @@ class UserServiceTest {
     assertTrue(result.isEmpty());
   }
 
+  // ---------- USER GetWith ----------
+
+  @Test
+  void getWithCards_shouldReturnUserAndMaskedCards() {
+    User user = user(1L, "Anna", "Ivanova", "anna@example.com");
+    UserResponse userResponse = response(user);
+
+    PaymentCardResponse card = new PaymentCardResponse(
+        10L,
+        1L,
+        "4111111111111111",
+        "ANNA IVANOVA",
+        java.time.LocalDate.of(2030, 12, 31),
+        true,
+        null,
+        null
+    );
+
+    when(userRepository.findById(1L))
+        .thenReturn(Optional.of(user));
+    when(userMapper.toResponse(user))
+        .thenReturn(userResponse);
+    when(paymentCardService.getByUserId(1L))
+        .thenReturn(List.of(card));
+
+    UserWithCardsResponse result = userService.getWithCards(1L);
+
+    assertNotNull(result);
+    assertEquals(userResponse, result.user());
+    assertEquals(1, result.cards().size());
+    assertEquals("**** **** **** 1111",
+        result.cards().get(0).maskedNumber());
+  }
+
+  @Test
+  void getWithCards_shouldReturnEmptyCards_whenUserHasNoCards() {
+    User user = user(1L, "Anna", "Ivanova", "anna@example.com");
+    UserResponse userResponse = response(user);
+
+    when(userRepository.findById(1L))
+        .thenReturn(Optional.of(user));
+    when(userMapper.toResponse(user))
+        .thenReturn(userResponse);
+    when(paymentCardService.getByUserId(1L))
+        .thenReturn(List.of());
+
+    UserWithCardsResponse result = userService.getWithCards(1L);
+
+    assertNotNull(result);
+    assertEquals(userResponse, result.user());
+    assertTrue(result.cards().isEmpty());
+  }
+
+  @Test
+  void getWithCards_shouldThrow_whenUserDoesNotExist() {
+    when(userRepository.findById(999L))
+        .thenReturn(Optional.empty());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> userService.getWithCards(999L)
+    );
+
+    verify(paymentCardService, never()).getByUserId(anyLong());
+  }
   // ---------- TEST HELPERS ----------
 
   private User user(

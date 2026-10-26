@@ -4,6 +4,7 @@ import org.course_project.userService.dto.user.UserCreateRequest;
 import org.course_project.userService.dto.user.UserResponse;
 import org.course_project.userService.dto.user.UserUpdateRequest;
 import org.course_project.userService.service.UserService;
+import org.course_project.userService.dto.user.UserWithCardsResponse;
 
 import jakarta.validation.Valid;
 
@@ -76,6 +77,12 @@ public class UserController {
     return ResponseEntity.noContent().build();
   }
 
+  @GetMapping("/{id}/with-cards")
+  public ResponseEntity<UserWithCardsResponse> getWithCards(
+      @PathVariable Long id
+  ) {
+    return ResponseEntity.ok(userService.getWithCards(id));
+  }
 
   @GetMapping("/active")
   public ResponseEntity<java.util.List<UserResponse>> getActiveByName(

@@ -92,6 +92,7 @@ public class PaymentCardService {
   public PaymentCardResponse update(Long id, PaymentCardUpdateRequest request) {
     PaymentCard card = findCardOrThrow(id);
     cardMapper.updateEntity(request, card);
+    cardRepository.flush();
     evictUserWithCards(card.getUser().getId());
 
     return cardMapper.toResponse(card);
@@ -101,6 +102,7 @@ public class PaymentCardService {
   public PaymentCardResponse activate(Long id) {
     PaymentCard card = findCardOrThrow(id);
     card.setActive(true);
+    cardRepository.flush();
     evictUserWithCards(card.getUser().getId());
 
     return cardMapper.toResponse(card);
@@ -110,6 +112,7 @@ public class PaymentCardService {
   public PaymentCardResponse deactivate(Long id) {
     PaymentCard card = findCardOrThrow(id);
     card.setActive(false);
+    cardRepository.flush();
     evictUserWithCards(card.getUser().getId());
 
     return cardMapper.toResponse(card);

@@ -77,7 +77,7 @@ public class UserService {
 
     userMapper.updateEntity(request, user);
     user.setEmail(email);
-
+    userRepository.flush();
     return userMapper.toResponse(user);
   }
 
@@ -103,6 +103,7 @@ public class UserService {
   public UserResponse activate(Long id) {
     User user = findUserOrThrow(id);
     user.setActive(true);
+    userRepository.flush();
     return userMapper.toResponse(user);
   }
 
@@ -111,6 +112,7 @@ public class UserService {
   public UserResponse deactivate(Long id) {
     User user = findUserOrThrow(id);
     user.setActive(false);
+    userRepository.flush();
     return userMapper.toResponse(user);
   }
 
